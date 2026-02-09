@@ -52,6 +52,10 @@ const style = {
     top: 20,
 }
 
+import Lights from './Lights.jsx';
+
+// ... (existing helper components Plane, Pillar)
+
 const VehicleScene = () => {
     return (
         <>
@@ -59,15 +63,7 @@ const VehicleScene = () => {
                 <fog attach="fog" args={['#171720', 10, 50]} />
                 <color attach="background" args={['#171720']} />
 
-                <ambientLight intensity={0.1 * Math.PI} />
-                <spotLight
-                    angle={0.5}
-                    castShadow
-                    decay={0}
-                    intensity={Math.PI}
-                    penumbra={1}
-                    position={[10, 10, 10]}
-                />
+                <Lights />
 
                 <Physics
                     broadphase="SAP"
@@ -80,9 +76,9 @@ const VehicleScene = () => {
                     <Plane rotation={[-Math.PI / 2, 0, 0]} userData={{ id: 'floor' }} />
 
                     <Vehicle
-                    position={[0, 2, 0]}
-                    rotation={[0, -Math.PI / 4, 0]}
-                    angularVelocity={[0, 0.5, 0]}
+                        position={[0, 2, 0]}
+                        rotation={[0, -Math.PI / 4, 0]}
+                        angularVelocity={[0, 0.5, 0]}
                     />
 
                     <Pillar position={[-5, 2.5, -5]} userData={{ id: 'pillar-1' }} />
@@ -93,8 +89,6 @@ const VehicleScene = () => {
                 <Suspense fallback={null}>
                     <Environment preset="night" />
                 </Suspense>
-
-                <OrbitControls />
             </Canvas>
 
             <div style={style}>
@@ -106,5 +100,6 @@ const VehicleScene = () => {
         </>
     )
 }
+
 
 export default VehicleScene

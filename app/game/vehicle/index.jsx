@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 
 import { useControls } from '../controls/use-controls';
+import FollowCamera from '../controls/followcamera';
 import Chassis from './chassis';
 import Wheel from './wheel';
 
@@ -73,11 +74,11 @@ function Vehicle({
             angularVelocity,
             args: [1.7, 1, 4],
             mass: 500,
+            userData: { type: 'vehicle' },
             onCollide: (e) => console.log('bonk', e.body?.userData),
             position,
             rotation,
-        }),
-        useRef(null)
+        }), useRef(null)
     );
 
     const [vehicle, vehicleApi] = useRaycastVehicle(
@@ -138,11 +139,19 @@ function Vehicle({
         <group ref={vehicle} position={[0, -0.4, 0]}>
             <Chassis ref={chassisBody} />
 
+            <FollowCamera
+                targetRef={chassisBody}
+                distance={10}
+                height={4}
+                lerp={0.1}
+            />
+
             <Wheel ref={wheels[0]} radius={radius} leftSide />
             <Wheel ref={wheels[1]} radius={radius} />
             <Wheel ref={wheels[2]} radius={radius} leftSide />
             <Wheel ref={wheels[3]} radius={radius} />
         </group>
+
     );
 };
 
