@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 
 import { useControls } from '../controls/use-controls';
-import FollowCamera from '../controls/followcamera';
+// import FollowCamera from '../controls/followcamera';
 import Chassis from './chassis';
 import Wheel from './wheel';
 
@@ -139,12 +139,12 @@ function Vehicle({
         <group ref={vehicle} position={[0, -0.4, 0]}>
             <Chassis ref={chassisBody} />
 
-            <FollowCamera
+            {/* <FollowCamera
                 targetRef={chassisBody}
                 distance={10}
                 height={4}
                 lerp={0.1}
-            />
+            /> */}
 
             <Wheel ref={wheels[0]} radius={radius} leftSide />
             <Wheel ref={wheels[1]} radius={radius} />

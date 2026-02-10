@@ -4,13 +4,14 @@ import {
   Physics, useBox, useSphere,
   useCylinder, usePlane, 
 } from '@react-three/cannon';
-// import * as THREE from 'three';
-import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { Suspense, useRef } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, ContactShadows } from '@react-three/drei';
 
 import Vehicle from './game/vehicle/index.jsx';
-import PhysicsText from './game/components/texts.jsx';
+import { PhysicalText } from './game/components/texts.jsx';
+
 // import TrackCollision from './game/trackcollision.jsx';
 // import World from './game/World.jsx';
 
@@ -67,11 +68,9 @@ function Plane(props) {
   return (
     <group ref={ref}>
       <mesh receiveShadow position={[0, 0, 0]}>
-        <planeGeometry args={[100, 100]} />
+        <planeGeometry args={[1000, 1000]} />
         <meshStandardMaterial color="SandyBrown" side={2} />
       </mesh>
-
-      <ContactShadows opacity={1} scale={10} blur={1} far={10} resolution={1024} color="#000000" />
     </group>
   );
 };
@@ -128,25 +127,60 @@ const VehicleScene = () => {
 
   return (
     <>
-      <Canvas camera={{ fov: 50, position: [0, 5, 15] }} shadows style={{ height: '100vh' }}>
-        {/* <fog attach="fog" args={['skyblue', 10, 75]} /> */}
+      <Canvas 
+        camera={{ fov: 50, position: [0, 7.5, 15] }} 
+        shadows style={{ height: '100vh' }}
+        gl={{ 
+          antialias: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.2
+        }}
+      >
+        {/* <fog attach="fog" args={['#87CEEB', 10, 75]} /> */}
 
-        <color attach="background" args={['sandybrown']} />
+        <color attach="background" args={['#87CEEB']} />
 
-        <ambientLight intensity={1} />
+        <ambientLight intensity={0.3} />
 
-        <directionalLight 
+        <directionalLight
+          position={[10, 15, 5]}
+          intensity={1.5}
           castShadow
-          intensity={0.8}
-          position={[5, 10, 7.5]}
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-near={5}
-          shadow-camera-far={5000}
-          shadow-camera-left={-100}
-          shadow-camera-right={100}
-          shadow-camera-top={100}
-          shadow-camera-bottom={-100}
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-far={50}
+          shadow-camera-left={-20}
+          shadow-camera-right={20}
+          shadow-camera-top={20}
+          shadow-camera-bottom={-20}
+          shadow-bias={-0.0001}
+        />
+
+        <directionalLight
+          position={[-5, 10, -5]}
+          intensity={0.5}
+          color="#4477ff"
+        />
+
+        <hemisphereLight
+          skyColor="#ffffff"
+          groundColor="#444444"
+          intensity={0.5}
+        />
+
+        <pointLight 
+          position={[0, 5, -10]} 
+          intensity={0.8} 
+          color="#ff6b6b" 
+        />
+
+        <ContactShadows
+          position={[0, 0.01, 0]}
+          opacity={0.5}
+          scale={1000}
+          blur={2}
+          far={10}
+          resolution={256}
+          color="#000000"
         />
 
         {/* <spotLight 
@@ -200,6 +234,30 @@ const VehicleScene = () => {
             mass={0}
             color="cadetblue"
           /> */}
+          <PhysicalText text="S" position={[-1.8, 1, 4]} />
+          <PhysicalText text="A" position={[-0.35, 1, 4]} />
+          <PhysicalText text="V" position={[0.75, 1, 4]} /> 
+          <PhysicalText text="D" position={[2.25, 1, 4]} />
+
+          {/* <PhysicalText text="A" position={[0.75, 0.8, 4]} />
+          <PhysicalText text="K" position={[2.2, 0.8, 4]} />
+          <PhysicalText text="H" position={[3.3, 0.8, 4]} />
+          <PhysicalText text="I" position={[4.15, 0.8, 4]} />
+          <PhysicalText text="L" position={[4.85, 0.8, 4]} /> */}
+
+          {/* <PhysicalText text="V" position={[0, 1.25, 4]} />
+          <PhysicalText text="A" position={[-1.8, 1.25, 4]} />
+          <PhysicalText text="R" position={[-0.5, 1.25, 4]} />
+          <PhysicalText text="M" position={[0, 1.25, 4]} />
+          <PhysicalText text="A" position={[-1.8, 1.25, 4]} />
+
+          {/*<PhysicalText text="D" position={[0, 1.25, 4]} />
+          <PhysicalText text="A" position={[-1.8, 1.25, 4]} />
+          <PhysicalText text="T" position={[-0.5, 1.25, 4]} />
+          <PhysicalText text="L" position={[0, 1.25, 4]} />
+          <PhysicalText text="A" position={[-1.8, 1.25, 4]} /> */}
+
+          {/* <StaticPhysicalText text="S A V D" position={[-1, 0.5, 4]} /> */}
 
           {/* Dynamic text (knockable) */}
           {/* <PhysicsText
