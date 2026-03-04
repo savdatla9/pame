@@ -5,12 +5,12 @@ import {
   useCylinder, usePlane, 
 } from '@react-three/cannon';
 import * as THREE from 'three';
-import { Suspense, useRef } from 'react';
+import { useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Environment, OrbitControls, ContactShadows } from '@react-three/drei';
+import { OrbitControls, ContactShadows } from '@react-three/drei';
 
 import Vehicle from './game/vehicle/index.jsx';
-import { PhysicalText } from './game/components/texts.jsx';
+import { BrickLetter } from './game/components/texts.jsx';
 
 // import TrackCollision from './game/trackcollision.jsx';
 // import World from './game/World.jsx';
@@ -234,10 +234,10 @@ const VehicleScene = () => {
             mass={0}
             color="cadetblue"
           /> */}
-          <PhysicalText text="S" position={[-1.8, 1, 4]} />
-          <PhysicalText text="A" position={[-0.35, 1, 4]} />
-          <PhysicalText text="V" position={[0.75, 1, 4]} /> 
-          <PhysicalText text="D" position={[2.25, 1, 4]} />
+          <BrickLetter text="S" position={[-1.8, 0.5, 4]} />
+          <BrickLetter text="A" position={[-0.35, 0.5, 4]} />
+          <BrickLetter text="V" position={[0.75, 0.5, 4]} /> 
+          <BrickLetter text="D" position={[2.25, 0.5, 4]} />
 
           {/* <PhysicalText text="A" position={[0.75, 0.8, 4]} />
           <PhysicalText text="K" position={[2.2, 0.8, 4]} />
@@ -269,9 +269,9 @@ const VehicleScene = () => {
           /> */}
         </Physics>
 
-        <Suspense fallback={null}>
+        {/* <Suspense fallback={null}>
           <Environment preset="night" />
-        </Suspense>
+        </Suspense> */}
 
         <OrbitControls />
       </Canvas>
