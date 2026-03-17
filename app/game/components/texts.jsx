@@ -113,7 +113,7 @@ export function BrickLetter({ text, letter, position, color="#A0522D" }) {
   const letterDepth = 0.3;
 
   const [ref] = useCompoundBody(() => ({
-    mass: 15,
+    mass: 10,
     position: position,
     shapes: [
       {

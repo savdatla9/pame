@@ -5,12 +5,117 @@ import {
   useCylinder, usePlane, 
 } from '@react-three/cannon';
 import * as THREE from 'three';
-import { useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useRef, useState, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
 
+import RampTrimesh from './game/components/Hill.jsx';
+import BlackHole from './game/components/BlackHole.jsx';
+import WhiteHole from './game/components/WhiteHole.jsx';
+import KeyItem from './game/components/Key.jsx';
 import Vehicle from './game/vehicle/index.jsx';
 import { BrickLetter } from './game/components/texts.jsx';
+
+// Generate particles just once to optimize memory
+const particleCount = 5000;
+const particleData = new Array(particleCount).fill().map(() => {
+  const x = (Math.random() - 0.5) * 80;
+  const z = (Math.random() - 0.5) * 80;
+  return {
+    position: [
+      x,
+      (Math.random() - 0.5) * 40, // y
+      z
+    ],
+    // Save the base X and Z so we can oscillate around them
+    baseX: x,
+    baseZ: z,
+    rotation: [
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI
+    ],
+    scale: Math.random() * 0.5 + 0.1,
+    speed: Math.random() * 0.05 + 0.01,
+    // Unique offsets for the sine waves so they don't all wave together
+    offset: Math.random() * Math.PI * 2,
+    waveSpeed: Math.random() * 0.5 + 0.5
+  };
+});
+
+function Particles({ currentWorld }) {
+  const mesh = useRef();
+  const dummy = new THREE.Object3D();
+  
+  // Clone the initial particle data so we can mutate it
+  const particles = useRef(JSON.parse(JSON.stringify(particleData)));
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    const isMars = currentWorld.key === 'mars';
+    const isIce = currentWorld.key === 'ice';
+    
+    particles.current.forEach((particle, i) => {
+      if (isMars) {
+        // Sandstorm on Mars: fast horizontal movement
+        particle.position[0] -= (particle.speed + 0.3); // Blow fast to the left
+        particle.position[1] = particle.baseX * 0.5 + Math.sin(time * particle.waveSpeed + particle.offset) * 2; // Wavy Y axis
+        particle.position[2] = particle.baseZ + Math.cos(time * particle.waveSpeed * 2 + particle.offset) * 2; // Wavy Z axis
+
+        // Wrap around X
+        if (particle.position[0] < -40) {
+          particle.position[0] = 40;
+        }
+      } else if (isIce) {
+        // Snow on Ice: falling down slowly with slight sway
+        particle.position[1] -= (particle.speed + 0.02);
+        
+        // Slight waving as they fall
+        particle.position[0] = particle.baseX + Math.sin(time * particle.waveSpeed * 0.5 + particle.offset) * 1.5;
+        particle.position[2] = particle.baseZ + Math.cos(time * particle.waveSpeed * 0.5 + particle.offset) * 1.5;
+        
+        // Wrap around Y (fall down)
+        if (particle.position[1] < -20) {
+          particle.position[1] = 20;
+        }
+      } else {
+        // Normal Worlds: slow upward movement
+        particle.position[1] += particle.speed;
+        
+        // Add wave motion to X and Z
+        particle.position[0] = particle.baseX + Math.sin(time * particle.waveSpeed + particle.offset) * 2;
+        particle.position[2] = particle.baseZ + Math.cos(time * particle.waveSpeed + particle.offset) * 2;
+        
+        // Wrap around Y
+        if (particle.position[1] > 20) {
+          particle.position[1] = -20;
+        }
+      }
+
+      particle.rotation[0] += isMars ? 0.05 : 0.01;
+      particle.rotation[1] += isMars ? 0.05 : 0.01;
+
+      dummy.position.set(...particle.position);
+      dummy.rotation.set(...particle.rotation);
+      dummy.scale.set(particle.scale, particle.scale, particle.scale);
+      dummy.updateMatrix();
+      
+      mesh.current.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={mesh} args={[null, null, particleCount]}>
+      <sphereGeometry args={[0.05, 8, 8]} />
+      <meshBasicMaterial 
+        color={currentWorld.key === 'mars' ? '#de6636' : 'white'} 
+        transparent 
+        opacity={currentWorld.key === 'mars' ? 0.6 : (currentWorld.key === 'ice' ? 0.8 : 0.3)} 
+      />
+    </instancedMesh>
+  );
+};
 
 // import TrackCollision from './game/trackcollision.jsx';
 // import World from './game/World.jsx';
@@ -59,7 +164,7 @@ function SphereObstacle({
   );
 };
 
-function Plane(props) {
+function Plane({ color = "SandyBrown", ...props }) {
   const [ref] = usePlane(
     () => ({ material: 'ground', type: 'Static', ...props }),
     useRef(null)
@@ -69,7 +174,7 @@ function Plane(props) {
     <group ref={ref}>
       <mesh receiveShadow position={[0, 0, 0]}>
         <planeGeometry args={[1000, 1000]} />
-        <meshStandardMaterial color="SandyBrown" side={2} />
+        <meshStandardMaterial color={color} side={2} />
       </mesh>
     </group>
   );
@@ -94,7 +199,7 @@ function Box({ position = [0, 1, 0], size = [1, 1, 1], color = 'orange', ...prop
   )
 };
 
-function Pillar(props) {
+function Pillar({ color = 'gray', ...props }) {
   const args = [0.7, 0.7, 5, 16]
 
   const [ref] = useCylinder(
@@ -109,7 +214,7 @@ function Pillar(props) {
   return (
     <mesh ref={ref} castShadow receiveShadow>
       <cylinderGeometry args={args} />
-      <meshNormalMaterial />
+      <meshStandardMaterial color={color} />
     </mesh>
   );
 };
@@ -122,8 +227,90 @@ const style = {
   top: 20,
 };
 
+const WORLDS = [
+  {
+    key: 'normal',
+    fog: '#87CEEB',
+    bg: '#87CEEB',
+    ambientLight: 0.3,
+    dirLight1: { color: '#ffffff', intensity: 1.5 },
+    dirLight2: { color: '#4477ff', intensity: 0.5 },
+    hemiLight: { sky: '#ffffff', ground: '#444444' },
+    pointLight: { color: '#ff6b6b', intensity: 0.8 },
+    ground: 'SandyBrown',
+  },
+  {
+    key: 'neon',
+    fog: '#0a0a1a',
+    bg: '#0a0a1a',
+    ambientLight: 0.05,
+    dirLight1: { color: '#aa88ff', intensity: 0.5 },
+    dirLight2: { color: '#ff4400', intensity: 1.5 },
+    hemiLight: { sky: '#4400aa', ground: '#111111' },
+    pointLight: { color: '#ff0055', intensity: 2.0 },
+    ground: '#220033',
+  },
+  {
+    key: 'mars',
+    fog: '#b04a25',
+    bg: '#de6636',
+    ambientLight: 0.2,
+    dirLight1: { color: '#ffccaa', intensity: 1.2 },
+    dirLight2: { color: '#883311', intensity: 0.8 },
+    hemiLight: { sky: '#ff8855', ground: '#331100' },
+    pointLight: { color: '#ffaa00', intensity: 1.5 },
+    ground: '#883311',
+  },
+  {
+    key: 'ice',
+    fog: '#d0f0ff',
+    bg: '#eef8ff',
+    ambientLight: 0.4,
+    dirLight1: { color: '#ffffff', intensity: 1.2 },
+    dirLight2: { color: '#88ccff', intensity: 1.0 },
+    hemiLight: { sky: '#ffffff', ground: '#aaddff' },
+    pointLight: { color: '#00ccff', intensity: 1.0 },
+    ground: '#aaccbb',
+  }
+];
+
 const VehicleScene = () => {
-  // const { lap, onCheckpoint, onFinish } = useRace()
+  const [worldIndex, setWorldIndex] = useState(0);
+  const [hasKey, setHasKey] = useState(false);
+
+  const getRandomPosition = (y) => [
+    (Math.random() - 0.5) * 40,
+    y,
+    (Math.random() - 0.5) * 40
+  ];
+
+  const [keyPosition, setKeyPosition] = useState([0, 1.5, -8]);
+  const [blackHolePosition, setBlackHolePosition] = useState([15, 2, -10]);
+  const [whiteHolePosition, setWhiteHolePosition] = useState([-15, 2, 10]);
+
+  const randomizePositions = () => {
+    setKeyPosition(getRandomPosition(1.5));
+    setBlackHolePosition(getRandomPosition(2));
+    setWhiteHolePosition(getRandomPosition(2));
+  };
+
+  useEffect(() => {
+    randomizePositions();
+  }, []);
+
+  const currentWorld = WORLDS[worldIndex];
+  
+  const onEnterBlackHole = () => {
+    setWorldIndex((prev) => (prev + 1) % WORLDS.length);
+    setHasKey(false);
+    randomizePositions();
+  };
+  
+  const onEnterWhiteHole = () => {
+    setWorldIndex((prev) => (prev - 1 + WORLDS.length) % WORLDS.length);
+    setHasKey(false);
+    randomizePositions();
+  };
 
   return (
     <>
@@ -136,15 +323,16 @@ const VehicleScene = () => {
           toneMappingExposure: 1.2
         }}
       >
-        {/* <fog attach="fog" args={['#87CEEB', 10, 75]} /> */}
+        <fog attach="fog" args={[currentWorld.fog, 10, 100]} />
 
-        <color attach="background" args={['#87CEEB']} />
+        <color attach="background" args={[currentWorld.bg]} />
 
-        <ambientLight intensity={0.3} />
+        <ambientLight intensity={currentWorld.ambientLight} />
 
         <directionalLight
           position={[10, 15, 5]}
-          intensity={1.5}
+          intensity={currentWorld.dirLight1.intensity}
+          color={currentWorld.dirLight1.color}
           castShadow
           shadow-mapSize={[2048, 2048]}
           shadow-camera-far={50}
@@ -157,20 +345,20 @@ const VehicleScene = () => {
 
         <directionalLight
           position={[-5, 10, -5]}
-          intensity={0.5}
-          color="#4477ff"
+          intensity={currentWorld.dirLight2.intensity}
+          color={currentWorld.dirLight2.color}
         />
 
         <hemisphereLight
-          skyColor="#ffffff"
-          groundColor="#444444"
+          skyColor={currentWorld.hemiLight.sky}
+          groundColor={currentWorld.hemiLight.ground}
           intensity={0.5}
         />
 
         <pointLight 
           position={[0, 5, -10]} 
-          intensity={0.8} 
-          color="#ff6b6b" 
+          intensity={currentWorld.pointLight.intensity} 
+          color={currentWorld.pointLight.color} 
         />
 
         <ContactShadows
@@ -183,14 +371,7 @@ const VehicleScene = () => {
           color="#000000"
         />
 
-        {/* <spotLight 
-          angle={0.75}
-          castShadow
-          decay={0}
-          intensity={Math.PI}
-          penumbra={1}
-          position={[-2, 10, -5]}
-        /> */}
+        <Particles currentWorld={currentWorld} />
 
         <Physics
           broadphase="SAP"
@@ -200,7 +381,24 @@ const VehicleScene = () => {
           }}
           allowSleep
         >
-          <Plane rotation={[-Math.PI / 2, 0, 0]} userData={{ id: 'floor' }} />
+          <Plane 
+            rotation={[-Math.PI / 2, 0, 0]} 
+            userData={{ id: 'floor' }} 
+            color={currentWorld.ground} 
+          />
+          
+          {!hasKey && (
+            <KeyItem position={keyPosition} onCollect={() => setHasKey(true)} />
+          )}
+
+          {hasKey && (
+            <>
+              <BlackHole position={blackHolePosition} onEnter={onEnterBlackHole} />
+              {currentWorld.key !== 'normal' && (
+                <WhiteHole position={whiteHolePosition} onEnter={onEnterWhiteHole} />
+              )}
+            </>
+          )}
 
           <Vehicle
             position={[0.5, 2, 0]}
@@ -208,70 +406,71 @@ const VehicleScene = () => {
             angularVelocity={[0, 0.5, 0]}
           />
 
-          <Pillar position={[-5, 2.5, -5]} userData={{ id: 'pillar-1' }} />
-          <Pillar position={[0, 2.5, -5]} userData={{ id: 'pillar-2' }} />
-          <Pillar position={[5, 2.5, -5]} userData={{ id: 'pillar-3' }} />
+          {currentWorld.key === 'normal' && (
+            <>
+              <Box position={[3, 1, 2]} color='forestgreen' />
+              <Box position={[-2, 1, 2]} color="red" />
+              <Box position={[-3, 1, -2]} color="aqua" />
+              {/* Stack of boxes */}
+              <Box position={[5, 1, 0]} />
+              <Box position={[5, 2.2, 0]} color="#00bfff" />
+              <Box position={[5, 3.4, 0]} />
+              {/* Static spheres (track barriers) */}
+              <SphereObstacle position={[8, 0.6, -6]} color='lightcyan' />
+              <SphereObstacle position={[-8, 0.6, -6]} color='skyblue' />
+              <SphereObstacle position={[12, 0.6, 4]} color='skyblue' />
+              <SphereObstacle position={[-12, 0.6, 4]} color='lightcyan' />
+              {/*  Hill */}
+              <RampTrimesh position={[0, 1.5, 15]} rotation={[0, Math.PI / 2, 0]} scale={[0.75, 0.75, 0.75]} />
+              <RampTrimesh position={[0, 1.5, 10]} rotation={[0, -Math.PI / 2, 0]} scale={[0.75, 0.75, 0.75]} />
+            </>
+          )}
 
-          <Box position={[3, 1, 2]} color='forestgreen' />
-          <Box position={[-2, 1, 2]} color="red" />
-          <Box position={[-3, 1, -2]} color="aqua" />
+          {currentWorld.key === 'neon' && (
+            <>
+              <Pillar position={[-5, 2.5, 2]} color="#aa00ff" />
+              <Pillar position={[0, 2.5, 2]} color="#ff00aa" />
+              <Pillar position={[5, 2.5, 2]} color="#aa00ff" />
+              <SphereObstacle position={[8, 0.6, -6]} color='#ff22aa' />
+              <SphereObstacle position={[-8, 0.6, -6]} color='#aa22ff' />
+              <SphereObstacle position={[12, 0.6, 4]} color='#22ffff' />
+              <SphereObstacle position={[-12, 0.6, 4]} color='#ff22aa' />
+              <Box position={[3, 1, 2]} color='#ff00aa' />
+              <Box position={[-2, 1, 2]} color="#aa00ff" />
+              <Box position={[-3, 1, -2]} color="#22ffff" />
+            </>
+          )}
 
-          {/* Stack of boxes */}
-          <Box position={[5, 1, 0]} />
-          <Box position={[5, 2.2, 0]} color="#00bfff" />
-          <Box position={[5, 3.4, 0]} />
+          {currentWorld.key === 'mars' && (
+            <>
+              <Box position={[3, 1, 2]} color='#ff5533' />
+              <Pillar position={[-3, 2.5, 4]} color="#cc2211" />
+              <Pillar position={[3, 2.5, -4]} color="#cc2211" />
+              <SphereObstacle position={[6, 1.2, 6]} radius={1.2} color='#883311' />
+              <SphereObstacle position={[-6, 1.2, -6]} radius={1.2} color='#cc5533' />
+              {/*  Hill */}
+              <RampTrimesh position={[10, 1.5, 0]} rotation={[0, Math.PI, 0]} scale={[0.75, 0.75, 0.75]} />
+            </>
+          )}
 
-          {/* Static spheres (track barriers) */}
-          <SphereObstacle position={[8, 0.6, -6]} color='lightcyan' />
-          <SphereObstacle position={[-8, 0.6, -6]} color='skyblue' />
-          <SphereObstacle position={[12, 0.6, 4]} color='skyblue' />
-          <SphereObstacle position={[-12, 0.6, 4]} color='lightcyan' />
+          {currentWorld.key === 'ice' && (
+            <>
+              <Pillar position={[-5, 2.5, -5]} color="#ffffff" />
+              <Pillar position={[5, 2.5, 5]} color="#aaddff" />
+              <SphereObstacle position={[8, 0.6, -6]} color='#bbddff' />
+              <SphereObstacle position={[-8, 0.6, -6]} color='#ffffff' />
+              <Box position={[3, 1, 2]} color='#aaddff' />
+              <Box position={[-2, 1, 2]} color="#ffffff" />
+              <RampTrimesh position={[0, 1.5, 20]} rotation={[0, Math.PI / 2, 0]} scale={[1, 1, 1]} />
+            </>
+          )}
 
-          {/* <PhysicsText
-            text="S A V D"
-            position={[0, 0, 4]}
-            size={1.5}
-            mass={0}
-            color="cadetblue"
-          /> */}
-          <BrickLetter text="S" position={[-1.8, 0.5, 4]} />
-          <BrickLetter text="A" position={[-0.35, 0.5, 4]} />
-          <BrickLetter text="V" position={[0.75, 0.5, 4]} /> 
-          <BrickLetter text="D" position={[2.25, 0.5, 4]} />
-
-          {/* <PhysicalText text="A" position={[0.75, 0.8, 4]} />
-          <PhysicalText text="K" position={[2.2, 0.8, 4]} />
-          <PhysicalText text="H" position={[3.3, 0.8, 4]} />
-          <PhysicalText text="I" position={[4.15, 0.8, 4]} />
-          <PhysicalText text="L" position={[4.85, 0.8, 4]} /> */}
-
-          {/* <PhysicalText text="V" position={[0, 1.25, 4]} />
-          <PhysicalText text="A" position={[-1.8, 1.25, 4]} />
-          <PhysicalText text="R" position={[-0.5, 1.25, 4]} />
-          <PhysicalText text="M" position={[0, 1.25, 4]} />
-          <PhysicalText text="A" position={[-1.8, 1.25, 4]} />
-
-          {/*<PhysicalText text="D" position={[0, 1.25, 4]} />
-          <PhysicalText text="A" position={[-1.8, 1.25, 4]} />
-          <PhysicalText text="T" position={[-0.5, 1.25, 4]} />
-          <PhysicalText text="L" position={[0, 1.25, 4]} />
-          <PhysicalText text="A" position={[-1.8, 1.25, 4]} /> */}
-
-          {/* <StaticPhysicalText text="S A V D" position={[-1, 0.5, 4]} /> */}
-
-          {/* Dynamic text (knockable) */}
-          {/* <PhysicsText
-            text="Varma Datla"
-            position={[5.5, 0, 4]}
-            size={1.2}
-            mass={5}
-            color="azure"
-          /> */}
+          {/*  Name Logo*/}
+          <BrickLetter text="S" position={[-1.5, 0.5, -4]} />
+          <BrickLetter text="A" position={[-0.35, 0.5, -4]} />
+          <BrickLetter text="V" position={[0.75, 0.5, -4]} /> 
+          <BrickLetter text="D" position={[2, 0.5, -4]} />
         </Physics>
-
-        {/* <Suspense fallback={null}>
-          <Environment preset="night" />
-        </Suspense> */}
 
         <OrbitControls />
       </Canvas>
