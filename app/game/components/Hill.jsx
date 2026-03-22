@@ -1,8 +1,13 @@
-import { useTrimesh } from '@react-three/cannon';
+import { useConvexPolyhedron } from '@react-three/cannon';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-export default function RampTrimesh(props) {
+export default function RampTrimesh({ position, rotation, scale = [1, 1, 1], color }) {
+    const scaleArr = Array.isArray(scale) ? scale : [scale, scale, scale];
+    const sx = scaleArr[0];
+    const sy = scaleArr[1];
+    const sz = scaleArr[2];
+
     const geometry = useMemo(() => {
         const shape = new THREE.Shape();
         shape.moveTo(0, 0);
@@ -15,45 +20,52 @@ export default function RampTrimesh(props) {
             bevelEnabled: false,
         });
 
-        // FIX 1: Center the geometry so physics and visual align perfectly
+        // Center the geometry so physics and visual align perfectly, then bake scale directly
         geo.center();
+        geo.scale(sx, sy, sz);
 
         return geo;
-    }, []);
+    }, [sx, sy, sz]);
 
-    const [vertices, indices] = useMemo(() => {
-        const verts = geometry.attributes.position.array;
+    // Trimesh does not correctly collide with all Cannon bodies (such as other blocks or RaycastVehicles sometimes). 
+    // Using a properly triangulated ConvexPolyhedron instead forms a completely solid and flawless rock collision hull.
+    const [ref] = useConvexPolyhedron(() => {
+        // Provide the same shape vertices but explicitly defined with scaling
+        const vertices = [
+            [-2.5 * sx, -1.5 * sy, -2 * sz], // 0: front-bottom-left
+            [ 2.5 * sx, -1.5 * sy, -2 * sz], // 1: front-bottom-right
+            [ 2.5 * sx,  1.5 * sy, -2 * sz], // 2: front-top-right
+            [-2.5 * sx, -1.5 * sy,  2 * sz], // 3: back-bottom-left
+            [ 2.5 * sx, -1.5 * sy,  2 * sz], // 4: back-bottom-right
+            [ 2.5 * sx,  1.5 * sy,  2 * sz], // 5: back-top-right
+        ];
 
-        let inds;
+        // Faces must be perfectly CCW, pointing outward, forming a completely sealed convex hull.
+        const faces = [
+            [0, 2, 1],       // Front triangle
+            [3, 4, 5],       // Back triangle
+            [0, 1, 4],       // Bottom rect T1
+            [0, 4, 3],       // Bottom rect T2
+            [1, 2, 5],       // Right rect T1
+            [1, 5, 4],       // Right rect T2
+            [0, 3, 5],       // Slope rect T1
+            [0, 5, 2],       // Slope rect T2
+        ];
 
-        if (geometry.index !== null) {
-            // ✅ Geometry is indexed — use directly
-            inds = geometry.index.array;
-        } else {
-            // ✅ Geometry is NON-indexed (ExtrudeGeometry case)
-            // Every 3 vertices already form a triangle
-            // Generate indices manually: [0,1,2, 3,4,5, 6,7,8 ...]
-            inds = Array.from({ length: verts.length / 3 }, (_, i) => i);
+        return {
+            type: 'Static',
+            mass: 0,
+            position,
+            rotation,
+            // DO NOT pass `scale` here. Cannon doesn't use scale for ConvexPolyhedra, we baked it in instead.
+            args: [vertices, faces],
         };
+    });
 
-        return [verts, inds];
-    }, [geometry]);
-
-    // FIX 2: Only set position on the physics body (useTrimesh ref)
-    // Do NOT set position on the mesh separately — it causes double offset
-    const [ref] = useTrimesh(() => ({
-        mass: 0,
-        position: props.position, // Adjusted Y so ramp sits on ground
-        rotation: props.rotation, // Rotate to face the right direction
-        scale: props.scale,
-        args: [vertices, indices],
-    }));
-
-    // FIX 3: mesh gets ref directly — no extra position prop
     return (
         <mesh ref={ref} receiveShadow castShadow>
             <primitive object={geometry} />
-            <meshStandardMaterial color="#e67e22" roughness={0.7} />
+            <meshStandardMaterial color={color || "#7a7a7a"} roughness={0.9} />
         </mesh>
     );
 };
