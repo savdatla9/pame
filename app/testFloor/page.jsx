@@ -1,10 +1,12 @@
-import { Physics, useHeightfield, useSphere } from '@react-three/cannon'
+'use client'
+
+import { Physics, useHeightfield, useSphere } from '@react-three/cannon';
 import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Color, Float32BufferAttribute } from 'three'
 
-import niceColors from '../colors'
+const niceColors = ['#99b898', '#fecea8', '#ff847c', '#e84a5f', '#2a363b']
 
 /* Generates a 2D array using Worley noise. */
 function generateHeightmap({ width, height, number, scale }) {
@@ -168,7 +170,7 @@ function Camera() {
         <>
             <perspectiveCamera ref={cameraRef} position={[0, -10, 10]} />
             <OrbitControls
-                enableDamping
+                enableDamping enableRotate enableZoom enablePan
                 args={[camera, gl.domElement]}
                 dampingFactor={0.2}
                 minPolarAngle={Math.PI / 3}
@@ -180,7 +182,7 @@ function Camera() {
 
 export default function HeightFieldScene({ scale = 10 }) {
     return (
-        <Canvas shadows>
+        <Canvas shadows style={{width: '100vw', height: '100vh'}}>
             <color attach="background" args={['#171720']} />
             <Camera />
             <Physics>
