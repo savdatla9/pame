@@ -17,6 +17,7 @@ import WhiteHole from './game/components/WhiteHole.jsx';
 import KeyItem from './game/components/Key.jsx';
 import Vehicle from './game/vehicle/index.jsx';
 import { BrickLetter } from './game/components/texts.jsx';
+import Compass from './game/components/Compass.jsx';
 
 // Generate particles just once to optimize memory
 const particleCount = 5000;
@@ -626,6 +627,13 @@ const VehicleScene = () => {
           {'\n'}h for instructions
         </pre>
       </div>
+
+      <Compass 
+        keyPos={keyPosition} 
+        blackHolePos={blackHolePosition} 
+        whiteHolePos={currentWorld.key !== 'normal' ? whiteHolePosition : null} 
+        hasKey={hasKey} 
+      />
 
       {showInstructions && (
         <div style={{

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 
 import { useControls } from '../controls/use-controls';
 // import FollowCamera from '../controls/followcamera';
+import { useGameStore } from '../store';
 import Chassis from './chassis';
 import Wheel from './wheel';
 
@@ -98,12 +99,31 @@ function Vehicle({
     );
 
     useEffect(() => {
-        const unsub = vehicleApi.sliding.subscribe((v) =>
+        // Sync position to the global store
+        const unsubPos = chassisApi.position.subscribe((v) => {
+            useGameStore.getState().setPlayerPosition(v);
+        });
+        
+        // Sync rotation to the global store
+        const unsubRot = chassisApi.quaternion.subscribe((q) => {
+            useGameStore.getState().setPlayerRotation({
+                x: q[0],
+                y: q[1],
+                z: q[2],
+                w: q[3]
+            });
+        });
+
+        const unsubSliding = vehicleApi.sliding.subscribe((v) =>
             console.log('sliding', v)
         );
 
-        return unsub;
-    }, [vehicleApi]);
+        return () => {
+            unsubPos();
+            unsubRot();
+            unsubSliding();
+        };
+    }, [chassisApi, vehicleApi]);
 
     useFrame((state, delta) => {
         const { backward, brake, forward, left, reset, right } = controls.current;
