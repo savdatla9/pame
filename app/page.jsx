@@ -7,7 +7,7 @@ import {
 import * as THREE from 'three';
 import { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Loader } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Loader, MeshDistortMaterial } from '@react-three/drei';
 import { Suspense } from 'react';
 
 import RampTrimesh from './game/components/Hill.jsx';
@@ -203,18 +203,67 @@ function SphereObstacle({
   );
 };
 
-function Plane({ color = "SandyBrown", ...props }) {
+function Plane({ color = "SandyBrown", roughness = 0.8, metalness = 0.1, grid = false, worldKey, ...props }) {
   const [ref] = usePlane(
     () => ({ material: 'ground', type: 'Static', ...props }),
     useRef(null)
   );
 
+  const isIce = worldKey === 'ice';
+  const isNeon = worldKey === 'neon';
+
   return (
     <group ref={ref}>
+      {/* Main Surface */}
       <mesh receiveShadow position={[0, 0, 0]}>
         <planeGeometry args={[1000, 1000]} />
-        <meshStandardMaterial color={color} side={2} />
+        {isIce ? (
+          <meshPhysicalMaterial 
+            color={color} 
+            roughness={0.02} 
+            metalness={0.8} 
+            transmission={0.5} 
+            thickness={1.5}
+            reflectivity={1}
+            clearcoat={1}
+            side={THREE.DoubleSide} 
+          />
+        ) : (
+          <meshStandardMaterial 
+            color={color} 
+            roughness={roughness} 
+            metalness={metalness} 
+            side={THREE.DoubleSide} 
+          />
+        )}
       </mesh>
+
+      {/* Neon Flowing Water Overlay with Wave Effect */}
+      {isNeon && (
+        <group position={[0, 0, 0.1]}>
+          <mesh receiveShadow>
+            <planeGeometry args={[1000, 1000, 64, 64]} />
+            <MeshDistortMaterial 
+              color="#001133" 
+              transparent 
+              opacity={0.6} 
+              emissive="#0044ff" 
+              emissiveIntensity={0.5}
+              distort={0.4} 
+              speed={2} 
+            />
+          </mesh>
+        </group>
+      )}
+
+      {/* Main World Grid */}
+      {grid && !isNeon && (
+        <gridHelper 
+          args={[1000, 100, '#1E90FF', '#050510']} 
+          rotation={[Math.PI / 2, 0, 0]} 
+          position={[0, 0, 0.05]} 
+        />
+      )}
     </group>
   );
 };
@@ -276,7 +325,10 @@ const WORLDS = [
     dirLight2: { color: '#4477ff', intensity: 0.5 },
     hemiLight: { sky: '#ffffff', ground: '#444444' },
     pointLight: { color: '#ff6b6b', intensity: 0.8 },
-    ground: 'SandyBrown',
+    ground: '#C2B280', // Desert/Sand color
+    heightfieldColor: '#228B22', // Forest Green
+    roughness: 0.8,
+    metalness: 0.1,
   },
   {
     key: 'neon',
@@ -287,7 +339,11 @@ const WORLDS = [
     dirLight2: { color: '#ff4400', intensity: 1.5 },
     hemiLight: { sky: '#1E90FF', ground: '#111111' },
     pointLight: { color: '#1E90FF', intensity: 2.5 },
-    ground: '#220033',
+    ground: '#050510',
+    heightfieldColor: '#1E90FF',
+    roughness: 0.2,
+    metalness: 0.8,
+    grid: true,
   },
   {
     key: 'mars',
@@ -299,6 +355,9 @@ const WORLDS = [
     hemiLight: { sky: '#ff8855', ground: '#331100' },
     pointLight: { color: '#ffaa00', intensity: 1.5 },
     ground: '#883311',
+    heightfieldColor: '#cc5533',
+    roughness: 0.9,
+    metalness: 0.0,
   },
   {
     key: 'ice',
@@ -309,7 +368,10 @@ const WORLDS = [
     dirLight2: { color: '#88ccff', intensity: 1.0 },
     hemiLight: { sky: '#ffffff', ground: '#aaddff' },
     pointLight: { color: '#00ccff', intensity: 1.0 },
-    ground: '#aaddff',
+    ground: '#e0f7ff',
+    heightfieldColor: '#ffffff',
+    roughness: 0.05,
+    metalness: 0.95,
   }
 ];
 
@@ -486,6 +548,10 @@ const VehicleScene = () => {
             rotation={[-Math.PI / 2, 0, 0]} 
             userData={{ id: 'floor' }} 
             color={currentWorld.ground} 
+            roughness={currentWorld.roughness}
+            metalness={currentWorld.metalness}
+            grid={currentWorld.grid}
+            worldKey={currentWorld.key}
           />
           
           {!hasKey && (
@@ -524,10 +590,30 @@ const VehicleScene = () => {
               <SphereObstacle position={[12, 0.6, 4]} color='skyblue' />
               <SphereObstacle position={[-12, 0.6, 4]} color='lightcyan' />
               {/*  Hill */}
-              <RampTrimesh position={[3.5, 1.1, 15]} rotation={[0, Math.PI / 2, 0]} scale={[0.75, 0.75, 0.75]} />
-              <RampTrimesh position={[3.5, 1.1, 10]} rotation={[0, -Math.PI / 2, 0]} scale={[0.75, 0.75, 0.75]} />
+              <RampTrimesh 
+                position={[3.5, 1.1, 15]} 
+                rotation={[0, Math.PI / 2, 0]} 
+                scale={[0.75, 0.75, 0.75]} 
+                color={currentWorld.ground}
+                roughness={currentWorld.roughness}
+              />
+              <RampTrimesh 
+                position={[3.5, 1.1, 10]} 
+                rotation={[0, -Math.PI / 2, 0]} 
+                scale={[0.75, 0.75, 0.75]} 
+                color={currentWorld.ground}
+                roughness={currentWorld.roughness}
+              />
               {/* Heightfield Terrain */}
-              <Heightfield position={[-20, -0.2, 20]} size={32} elementSize={1.5} color="green" />
+              <Heightfield 
+                position={[-20, -0.2, 20]} 
+                size={32} 
+                elementSize={1.5} 
+                color={currentWorld.heightfieldColor} 
+                roughness={currentWorld.roughness}
+                metalness={currentWorld.metalness}
+                worldKey={currentWorld.key}
+              />
             </>
           )}
 
@@ -546,7 +632,13 @@ const VehicleScene = () => {
               <Box position={[-2, 1, 2]} color="#aa00ff" />
               <Box position={[-3, 1, -2]} color="#22ffff" />
               {/*  Hill */}
-              <RampTrimesh position={[0, 1.1, 18]} rotation={[0, Math.PI / 2, 0]} scale={[0.75, 0.75, 0.75]} />
+              <RampTrimesh 
+                position={[0, 1.1, 18]} 
+                rotation={[0, Math.PI / 2, 0]} 
+                scale={[0.75, 0.75, 0.75]} 
+                color="#220033"
+                roughness={0.2}
+              />
             </>
           )}
 
@@ -560,9 +652,23 @@ const VehicleScene = () => {
               <SphereObstacle position={[6, 1.2, 6]} radius={1.2} color='#883311' />
               <SphereObstacle position={[-6, 1.2, -6]} radius={1.2} color='#cc5533' />
               {/*  Hill */}
-              {/* <RampTrimesh position={[10, 1.1, 0]} rotation={[0, Math.PI, 0]} scale={[0.75, 0.75, 0.75]} /> */}
+              <RampTrimesh 
+                position={[10, 1.1, 0]} 
+                rotation={[0, Math.PI, 0]} 
+                scale={[0.75, 0.75, 0.75]} 
+                color={currentWorld.ground}
+                roughness={currentWorld.roughness}
+              />
               {/* Heightfield Terrain */}
-              <Heightfield position={[-20, -0.2, 20]} size={64} elementSize={1.5} color="#cc5533" />
+              <Heightfield 
+                position={[-20, -0.2, 20]} 
+                size={64} 
+                elementSize={1.5} 
+                color={currentWorld.heightfieldColor} 
+                roughness={currentWorld.roughness}
+                metalness={currentWorld.metalness}
+                worldKey={currentWorld.key}
+              />
             </>
           )}
 
@@ -577,9 +683,23 @@ const VehicleScene = () => {
               <Box position={[3, 1, 2]} color='#aaddff' />
               <Box position={[-2, 1, 2]} color="#ffffff" />
               {/*  Hill */}
-              {/* <RampTrimesh position={[0, 1.1, 20]} rotation={[0, Math.PI / 2, 0]} scale={[1, 1, 1]} /> */}
+              <RampTrimesh 
+                position={[0, 1.1, 20]} 
+                rotation={[0, Math.PI / 2, 0]} 
+                scale={[1, 1, 1]} 
+                color={currentWorld.ground}
+                roughness={currentWorld.roughness}
+              />
               {/* Heightfield Terrain */}
-              {/* <Heightfield position={[-20, -0.2, 20]} size={8} elementSize={2.5} color="#aaddff" /> */}
+              <Heightfield 
+                position={[-20, -0.2, 20]} 
+                size={32} 
+                elementSize={2.5} 
+                color={currentWorld.heightfieldColor} 
+                roughness={currentWorld.roughness}
+                metalness={currentWorld.metalness}
+                worldKey={currentWorld.key}
+              />
             </>
           )}
 

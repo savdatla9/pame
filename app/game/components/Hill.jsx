@@ -2,7 +2,13 @@ import { useConvexPolyhedron } from '@react-three/cannon';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-export default function RampTrimesh({ position, rotation, scale = [1, 1, 1], color }) {
+export default function RampTrimesh({ 
+    position, 
+    rotation, 
+    scale = [1, 1, 1], 
+    color, 
+    roughness = 0.9 
+}) {
     const scaleArr = Array.isArray(scale) ? scale : [scale, scale, scale];
     const sx = scaleArr[0];
     const sy = scaleArr[1];
@@ -65,7 +71,10 @@ export default function RampTrimesh({ position, rotation, scale = [1, 1, 1], col
     return (
         <mesh ref={ref} receiveShadow castShadow>
             <primitive object={geometry} />
-            <meshStandardMaterial color={color || "#7a7a7a"} roughness={0.9} />
+            <meshStandardMaterial 
+                color={color || "#7a7a7a"} 
+                roughness={roughness} 
+            />
         </mesh>
     );
-};
+};
