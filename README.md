@@ -1,6 +1,6 @@
 # 🏎️ PAME — 3D Portfolio Arcade Game
 
-Welcome to **PAME**, a interactive 3D driving experience that serves as a creative developer portfolio for **Sai Akhil Varma Datla (SAVD)**. Built with cutting-edge web technologies, PAME merges the worlds of gaming and professional showcases into a seamless, interdimensional journey.
+Welcome to **PAME**(Portfolio Game), a interactive 3D driving experience that serves as a creative developer portfolio for **Sai Akhil Varma Datla (SAVD)**. Built with cutting-edge web technologies, PAME merges the worlds of gaming and professional showcases into a seamless, interdimensional journey.
 
 ---
 
