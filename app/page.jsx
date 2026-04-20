@@ -327,8 +327,8 @@ const WORLDS = [
     pointLight: { color: '#ff6b6b', intensity: 0.8 },
     ground: '#C2B280', // Desert/Sand color
     heightfieldColor: '#228B22', // Forest Green
-    roughness: 0.8,
-    metalness: 0.1,
+    roughness: 0.9,
+    metalness: 0.75,
   },
   {
     key: 'neon',
@@ -339,11 +339,10 @@ const WORLDS = [
     dirLight2: { color: '#ff4400', intensity: 1.5 },
     hemiLight: { sky: '#1E90FF', ground: '#111111' },
     pointLight: { color: '#1E90FF', intensity: 2.5 },
-    ground: '#050510',
+    ground: '#ffffff',
     heightfieldColor: '#1E90FF',
     roughness: 0.2,
     metalness: 0.8,
-    grid: true,
   },
   {
     key: 'mars',
@@ -357,7 +356,7 @@ const WORLDS = [
     ground: '#883311',
     heightfieldColor: '#cc5533',
     roughness: 0.9,
-    metalness: 0.0,
+    metalness: 0.05,
   },
   {
     key: 'ice',
@@ -368,10 +367,10 @@ const WORLDS = [
     dirLight2: { color: '#88ccff', intensity: 1.0 },
     hemiLight: { sky: '#ffffff', ground: '#aaddff' },
     pointLight: { color: '#00ccff', intensity: 1.0 },
-    ground: '#e0f7ff',
-    heightfieldColor: '#ffffff',
-    roughness: 0.05,
-    metalness: 0.95,
+    ground: '#4f8fe4',
+    heightfieldColor: '#145e45',
+    roughness: 0.95,
+    metalness: 0.5,
   }
 ];
 
@@ -636,7 +635,7 @@ const VehicleScene = () => {
                 position={[0, 1.1, 18]} 
                 rotation={[0, Math.PI / 2, 0]} 
                 scale={[0.75, 0.75, 0.75]} 
-                color="#220033"
+                color="#ff22bb"
                 roughness={0.2}
               />
             </>
@@ -758,66 +757,172 @@ const VehicleScene = () => {
       {showInstructions && (
         <div style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 5, 0.85)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000,
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           color: 'white',
-          padding: '30px',
-          borderRadius: '15px',
-          maxWidth: '500px',
-          textAlign: 'center',
-          fontFamily: 'sans-serif',
-          zIndex: 1000,
-          boxShadow: '0 0 20px rgba(0,0,0,0.5)'
+          animation: 'fadeIn 0.3s ease-out'
         }}>
-          <h2 style={{ marginTop: 0, color: '#1E90FF', textTransform: 'uppercase', letterSpacing: '2px', fontSize: 25 }}>Game Instructions</h2>
-          
-          <div style={{ textAlign: 'left', marginBottom: '20px' }}>
-            <h3 style={{ color: '#ffaa00', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              🎮 Controls
-            </h3>
-            <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.8', fontSize: '1.1em' }}>
-              <li><strong>W / ↑</strong> : Accelerate</li>
-              <li><strong>S / ↓</strong> : Reverse</li>
-              <li><strong>A / ←</strong> : Steer Left</li>
-              <li><strong>D / →</strong> : Steer Right</li>
-              <li><strong>Space</strong> : Brake</li>
-              <li><strong>R</strong> : Reset Position</li>
-              <li><strong>H</strong> : Toggle this menu</li>
-            </ul>
-          </div>
+          <div style={{
+            backgroundColor: 'rgba(20, 25, 40, 0.95)',
+            border: '1px solid rgba(30, 144, 255, 0.3)',
+            borderRadius: '24px',
+            padding: '40px',
+            maxWidth: '900px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(30, 144, 255, 0.2)',
+            position: 'relative'
+          }}>
+            {/* Close Button */}
+            <button 
+              onClick={() => setShowInstructions(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '25px',
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: '32px',
+                cursor: 'pointer',
+                transition: 'color 0.2s',
+                padding: '5px'
+              }}
+              onMouseOver={(e) => e.target.style.color = '#1E90FF'}
+              onMouseOut={(e) => e.target.style.color = 'rgba(255,255,255,0.5)'}
+            >
+              ×
+            </button>
 
-          <div style={{ textAlign: 'left' }}>
-            <h3 style={{ color: '#00ccff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              🎯 Objective
-            </h3>
-            <p style={{ margin: 0, lineHeight: '1.6', fontSize: '1.1em' }}>
-              Explore different worlds! Find the hidden <strong style={{ color: '#ffaa00' }}>Key</strong> to unlock interdimensional portals. 
-              Drive into the <strong style={{ color: '#aa00ff' }}>Black Hole</strong> to travel forward, or the <strong style={{ color: 'grey' }}>White Hole</strong> to return to the previous world.
-            </p>
-          </div>
+            <header style={{ textAlign: 'center', marginBottom: '35px' }}>
+              <h1 style={{ 
+                margin: 0, 
+                fontSize: '2.5em', 
+                color: '#1E90FF', 
+                textTransform: 'uppercase', 
+                letterSpacing: '4px',
+                fontWeight: '900',
+                textShadow: '0 0 15px rgba(30, 144, 255, 0.5)'
+              }}>
+                PAME GUIDE
+              </h1>
+              <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '10px', fontSize: '1.1em' }}>
+                3D Portfolio Arcade Experience
+              </p>
+            </header>
 
-          <button 
-            onClick={() => setShowInstructions(false)}
-            style={{
-              marginTop: '30px',
-              padding: '12px 30px',
-              background: '#1E90FF',
-              border: 'none',
-              color: 'white',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '1.1em',
-              fontWeight: 'bold',
-              transition: 'background 0.2s',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-            }}
-            onMouseOver={(e) => e.target.style.background = '#0073e6'}
-            onMouseOut={(e) => e.target.style.background = '#1E90FF'}
-          >
-            LET'S PLAY
-          </button>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
+              gap: '30px',
+              textAlign: 'left'
+            }}>
+              {/* Section: Objective */}
+              <section>
+                <h3 style={{ color: '#00ccff', borderBottom: '1px solid rgba(0,204,255,0.3)', paddingBottom: '8px', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  🎯 Objective
+                </h3>
+                <p style={{ lineHeight: '1.6', fontSize: '1.05em', margin: 0 }}>
+                  Explore immersive dimensions! Each world hides a <strong style={{ color: '#ffaa00' }}>Golden Key</strong>. 
+                  Collect it to activate portals:
+                </p>
+                <ul style={{ marginTop: '10px', paddingLeft: '20px', lineHeight: '1.6' }}>
+                  <li><strong style={{ color: '#aa00ff' }}>Black Hole</strong>: Advance to the next world.</li>
+                  <li><strong style={{ color: '#ffffff', textShadow: '0 0 5px white' }}>White Hole</strong>: Return to the previous world.</li>
+                </ul>
+              </section>
+
+              {/* Section: Controls */}
+              <section>
+                <h3 style={{ color: '#ffaa00', borderBottom: '1px solid rgba(255,170,0,0.3)', paddingBottom: '8px', marginBottom: '15px' }}>
+                  🎮 Controls
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '1.05em' }}>
+                  <span><strong>W / ↑</strong> : Accelerate</span>
+                  <span><strong>A / ←</strong> : Steer Left</span>
+                  <span><strong>S / ↓</strong> : Reverse</span>
+                  <span><strong>D / →</strong> : Steer Right</span>
+                  <span><strong>Space</strong> : Brake</span>
+                  <span><strong>R</strong> : Reset Position</span>
+                  <span style={{ gridColumn: 'span 2' }}><strong>H</strong> : Toggle this Guide</span>
+                </div>
+              </section>
+
+              {/* Section: Worlds */}
+              <section style={{ gridColumn: 'span 2' }}>
+                <h3 style={{ color: '#22ff88', borderBottom: '1px solid rgba(34,255,136,0.3)', paddingBottom: '8px', marginBottom: '15px' }}>
+                  🪐 The Dimensions
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px' }}>
+                    <h4 style={{ margin: '0 0 5px 0', color: '#87CEEB' }}>🌍 Normal</h4>
+                    <small>The origin world. Lush terrain and clear skies.</small>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px' }}>
+                    <h4 style={{ margin: '0 0 5px 0', color: '#ff4400' }}>🚀 Mars</h4>
+                    <small>Red dust and sandstorms. High gravity exploration.</small>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px' }}>
+                    <h4 style={{ margin: '0 0 5px 0', color: '#00ccff' }}>❄️ Ice</h4>
+                    <small>Low friction surface. Watch your momentum!</small>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px' }}>
+                    <h4 style={{ margin: '0 0 5px 0', color: '#aa00ff' }}>🌃 Neon</h4>
+                    <small>Cyberpunk rain and electric lightning effects.</small>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <footer style={{ marginTop: '40px', textAlign: 'center' }}>
+              <button 
+                onClick={() => setShowInstructions(false)}
+                style={{
+                  padding: '15px 45px',
+                  background: 'linear-gradient(135deg, #1E90FF, #00BFFF)',
+                  border: 'none',
+                  color: 'white',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontSize: '1.2em',
+                  fontWeight: '900',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 20px rgba(30, 144, 255, 0.4)'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 12px 25px rgba(30, 144, 255, 0.6)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 8px 20px rgba(30, 144, 255, 0.4)';
+                }}
+              >
+                ENTER DIMENSION
+              </button>
+              <p style={{ marginTop: '20px', color: 'rgba(255,255,255,0.3)', fontSize: '0.9em' }}>
+                Built by Sai Akhil Varma Datla (SAVD)
+              </p>
+            </footer>
+          </div>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: scale(1.05); }
+              to { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
         </div>
       )}
     </>
