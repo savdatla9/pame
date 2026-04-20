@@ -1,18 +1,18 @@
 # 🏎️ PAME — 3D Portfolio Arcade Game
 
-Welcome to **PAME**, a high-fidelity, interactive 3D driving experience that serves as a creative developer portfolio for **Sai Akhil Varma Datla (SAVD)**. Built with cutting-edge web technologies, PAME merges the worlds of gaming and professional showcases into a seamless, interdimensional journey.
+Welcome to **PAME**, a interactive 3D driving experience that serves as a creative developer portfolio for **Sai Akhil Varma Datla (SAVD)**. Built with cutting-edge web technologies, PAME merges the worlds of gaming and professional showcases into a seamless, interdimensional journey.
 
 ---
 
 ## 🌌 The Experience
 
-PAME is not just a landing page; it's an exploration. Players take control of a physics-based vehicle and navigate through diverse, surreal environments. Each world is a testament to technical skill in 3D graphics, physics integration, and UI design.
+PAME is not just a landing page; it's an exploration. Players take control of a physics-based vehicle and navigate through diverse, surreal environments. Each world is a testament to technical skill in 3D graphics, physics integration and UI design.
 
 ### 🪐 Explorable Worlds
-- **🌍 Normal World**: A vibrant, sun-drenched environment featuring lush terrain, obstacles, and the iconic "SAVD" brick logo.
-- **🚀 Mars**: A rugged, crimson wasteland with sandstorms, low visibility, and challenging elevation changes.
-- **❄️ Ice World**: A slick, translucent landscape where friction is low and precision is key.
+- **🌍 Normal World**: A vibrant, sun-drenched environment featuring lush terrain, obstacles and the iconic "SAVD" brick logo.
 - **🌆 Neon City**: A cyberpunk-inspired realm with torrential rain, electric lighting, and high-contrast aesthetics.
+- **🚀 Mars**: A rugged, crimson wasteland with sandstorms, low visibility and challenging elevation changes.
+- **❄️ Ice World**: A slick, translucent landscape where friction is low and precision is key.
 
 ---
 
@@ -75,7 +75,7 @@ To run the arcade project locally:
 ---
 
 ## 👨‍💻 About the Developer
-**Sai Akhil Varma Datla** is a developer dedicated to pushing the boundaries of web application experiences. PAME represents a blend of technical capability in physics simulation, 3D rendering, and modern Next.js architecture.
+**Sai Akhil Varma Datla** is a developer dedicated to pushing the boundaries of web application experiences. PAME represents a blend of technical capability in physics simulation, 3D rendering and modern Next.js architecture.
 
 ---
 
